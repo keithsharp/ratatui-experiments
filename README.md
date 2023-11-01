@@ -5,6 +5,7 @@ Experiments in using the [Ratatui Text User Interface crate](https://crates.io/c
 + Ratatui [API documentation](https://docs.rs/ratatui/0.24.0/ratatui/).
 + Ratatui [source code](https://github.com/ratatui-org/ratatui).
 + More [examples](https://github.com/ratatui-org/ratatui/tree/main/examples).
++ Crossterm [API documentation](https://docs.rs/crossterm/0.27.0/crossterm/).
 
 # Copyright and License
 Copyright 2023, Keith Sharp, &lt;[kms@passback.co.uk](mailto:kms@passback.co.uk)&gt;.
