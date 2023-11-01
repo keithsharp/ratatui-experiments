@@ -1,81 +1,41 @@
-use ratatui::prelude::CrosstermBackend;
-use ratatui::widgets::Paragraph;
-use ratatui::{Frame, Terminal};
-
+mod app;
 mod error;
+mod event;
+mod tui;
+mod ui;
+mod update;
 
-use error::CounterError;
+use ratatui::backend::CrosstermBackend;
+use ratatui::Terminal;
+
+use app::AppState;
+use event::{Event, EventHandler};
+use tui::Tui;
+use update::update;
 
 const EVENT_POLL_TIME: u64 = 250;
 
-struct AppState {
-    counter: i64,
-    should_quit: bool,
-}
-
 fn main() -> anyhow::Result<()> {
-    startup()?;
-    let status = run();
-    shutdown()?;
-    status?;
+    let mut app = AppState::new();
 
-    Ok(())
-}
+    let backend = CrosstermBackend::new(std::io::stderr());
+    let terminal = Terminal::new(backend)?;
+    let events = EventHandler::new(EVENT_POLL_TIME);
 
-fn startup() -> Result<(), CounterError> {
-    crossterm::terminal::enable_raw_mode()?;
-    crossterm::execute!(std::io::stderr(), crossterm::terminal::EnterAlternateScreen)?;
-    Ok(())
-}
-fn shutdown() -> Result<(), CounterError> {
-    crossterm::execute!(std::io::stderr(), crossterm::terminal::LeaveAlternateScreen)?;
-    crossterm::terminal::disable_raw_mode()?;
-    Ok(())
-}
+    let mut tui = Tui::new(terminal, events);
+    tui.enter()?;
 
-fn ui(app: &AppState, f: &mut Frame<'_>) {
-    f.render_widget(
-        Paragraph::new(format!("Counter: {}", app.counter)),
-        f.size(),
-    );
-}
+    while !app.should_quit() {
+        tui.draw(&mut app)?;
 
-fn update(app: &mut AppState) -> Result<(), CounterError> {
-    if crossterm::event::poll(std::time::Duration::from_millis(EVENT_POLL_TIME))? {
-        if let crossterm::event::Event::Key(key) = crossterm::event::read()? {
-            if key.kind == crossterm::event::KeyEventKind::Press {
-                match key.code {
-                    crossterm::event::KeyCode::Char('j') => app.counter += 1,
-                    crossterm::event::KeyCode::Char('k') => app.counter -= 1,
-                    crossterm::event::KeyCode::Char('q') => app.should_quit = true,
-                    _ => {}
-                }
-            }
-        }
-    }
-    Ok(())
-}
-
-fn run() -> Result<(), CounterError> {
-    let mut terminal = Terminal::new(CrosstermBackend::new(std::io::stderr()))?;
-
-    let mut app = AppState {
-        counter: 0,
-        should_quit: false,
-    };
-
-    loop {
-        // Draw a frame
-        terminal.draw(|f| {
-            ui(&app, f);
-        })?;
-
-        update(&mut app)?;
-
-        if app.should_quit {
-            break;
-        }
+        match tui.events.next()? {
+            Event::Tick => {}
+            Event::Key(key_event) => update(&mut app, key_event),
+            Event::Mouse(_) => {}
+            Event::Resize(_, _) => {}
+        };
     }
 
+    tui.exit()?;
     Ok(())
 }
