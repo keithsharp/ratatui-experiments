@@ -1,0 +1,17 @@
+[workspace]
+members = [
+    "crates/*"
+]
+resolver = "2"
+
+[workspace.package]
+authors = ["Keith Sharp <kms@passback.co.uk"]
+description = "Experiments in using the Ratatui Text User Interface crate"
+license = "AGPL-3.0-or-later"
+version = "0.1.0"
+edition = "2021"
+
+[workspace.dependencies]
+anyhow = "1.0.71"
+crossterm = "0.27.0"
+ratatui = "0.24.0"
